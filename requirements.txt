@@ -1,0 +1,9 @@
+runpod
+boto3
+Pillow
+diffusers>=0.27.0
+transformers>=4.41.0
+accelerate>=0.30.0
+safetensors>=0.4.2
+numpy
+sentry-sdk
