@@ -12,6 +12,7 @@ import sentry_sdk
 from sentry_sdk.integrations.logging import LoggingIntegration
 import torch
 from diffusers import StableDiffusionXLPipeline, StableDiffusionXLImg2ImgPipeline
+from diffusers import DPMSolverMultistepScheduler
 
 def get_env(name, default=None):
     v = os.getenv(name)
@@ -40,6 +41,19 @@ def load_pipelines():
             token=token,
             add_watermarker=False,
         ).to("cuda")
+        try:
+            PIPE_BASE.scheduler = DPMSolverMultistepScheduler.from_config(PIPE_BASE.scheduler.config)
+        except Exception:
+            pass
+        try:
+            PIPE_BASE.enable_xformers_memory_efficient_attention()
+        except Exception:
+            pass
+        try:
+            PIPE_BASE.enable_vae_slicing()
+            PIPE_BASE.enable_attention_slicing()
+        except Exception:
+            pass
     use_refiner = get_env("GEN_ENABLE_REFINER", "false").lower() == "true"
     if use_refiner and PIPE_REFINER is None:
         ref_id = get_env("GEN_REFINER_MODEL_ID", "stabilityai/stable-diffusion-xl-refiner-1.0")
@@ -51,6 +65,19 @@ def load_pipelines():
             use_safetensors=True,
             token=token,
         ).to("cuda")
+        try:
+            PIPE_REFINER.scheduler = DPMSolverMultistepScheduler.from_config(PIPE_REFINER.scheduler.config)
+        except Exception:
+            pass
+        try:
+            PIPE_REFINER.enable_xformers_memory_efficient_attention()
+        except Exception:
+            pass
+        try:
+            PIPE_REFINER.enable_vae_slicing()
+            PIPE_REFINER.enable_attention_slicing()
+        except Exception:
+            pass
 
 def upload_s3(img_bytes, file_name):
     if (get_env("SAVE_OUTPUTS_TO_S3", "false").lower() != "true"):
